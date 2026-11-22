@@ -1,113 +1,90 @@
-# Learn MCP with Supabase
+# Sales reporting with Supabase MCP
 
-This repository is a learning guide for connecting AI clients to Supabase with the Model Context Protocol (MCP). The examples below use Supabase's hosted MCP server; they do not start a server from this repository.
+This repository configures GitHub Copilot in VS Code, OpenCode, and Claude Code to connect to the Supabase project used for sales reporting. It uses Supabase's hosted MCP server; this repository does not run a server itself.
 
-## How it works
+## What is configured
 
-```text
-Copilot / OpenCode / Claude  ->  Supabase MCP server  ->  Your Supabase project
-```
+- [`AGENTS.md`](./AGENTS.md) contains the business reporting instructions: retrieve source data before reporting, calculate revenue as quantity × unit price using completed sales only, use SQL for calculations, and never write to the database.
+- [`.vscode/mcp.json`](./.vscode/mcp.json) configures the MCP server for VS Code and Copilot.
+- [`opencode.json`](./opencode.json) configures the MCP server for OpenCode.
+- [`.mcp.json`](./.mcp.json) configures the MCP server for Claude Code.
 
-The MCP server exposes Supabase tools to your AI client. Supabase authenticates through a browser-based OAuth flow; you do not need to put a Supabase password, access token, or API key in these configuration examples.
-
-## Before you start
-
-- Have a Supabase project and know its project reference ID. You can find it in the project's dashboard URL or project settings.
-- Install and sign in to the AI client you want to use.
-- For a safer learning setup, use a development project and start with the read-only, project-scoped URL below. Replace `YOUR_PROJECT_REF` with your project's reference ID:
+All three MCP configurations contain a placeholder project reference. Before connecting, replace `YOUR_PROJECT_REF` in the relevant configuration file with your own Supabase project reference:
 
 ```text
 https://mcp.supabase.com/mcp?project_ref=YOUR_PROJECT_REF&read_only=true&features=database,docs
 ```
 
-`project_ref` limits the connection to one project. `read_only=true` limits database tools to read-only operations, and `features` selects the database and documentation tool groups. You can remove these restrictions, but do so only if you understand and want to grant the additional access.
+Find the project reference in your Supabase project's dashboard URL or project settings. It scopes the server to one project. `read_only=true` restricts database access to read-only operations, and `features=database,docs` enables the database and documentation tools needed for reporting. This setting is an important safeguard, but still review tool calls and results.
 
-## GitHub Copilot in VS Code
+## Requirements
 
-1. In VS Code, open this repository (or another workspace) and create `.vscode/mcp.json`.
-2. Add the following configuration, replacing `YOUR_PROJECT_REF`:
+- Open this repository as the workspace/project in the client. The clients discover project configuration and instructions from the opened workspace.
+- Sign in to the client and to the Supabase account that has access to this project.
+- Approve the project-level MCP server when prompted. Authentication is completed separately in each client; the configuration files do not contain credentials.
 
-```json
-{
-  "servers": {
-    "supabase": {
-      "type": "http",
-      "url": "https://mcp.supabase.com/mcp?project_ref=YOUR_PROJECT_REF&read_only=true&features=database,docs"
-    }
-  }
-}
-```
+## Connect and authenticate
 
-3. Save the file. If VS Code asks you to start or trust the server, review the request and approve it only if it matches this setup.
-4. Follow the browser prompt to sign in to Supabase and authorize access.
-5. In Copilot Chat, ask it to use the Supabase MCP tools to list the project's tables. Check the tool call and result to confirm the connection.
+### GitHub Copilot in VS Code
 
-You can also use VS Code's **MCP: Add Server** command or **Chat: Open Customizations > MCP Servers** to add and manage the server without editing the file. See the [VS Code MCP guide](https://code.visualstudio.com/docs/agent-customization/mcp-servers).
+1. Open this repository in VS Code.
+2. Open Copilot Chat and select the agent mode/session that supports MCP tools.
+3. Replace `YOUR_PROJECT_REF` in `.vscode/mcp.json` with your Supabase project reference. If prompted, start and trust the `supabase` server, then complete the Supabase browser sign-in.
+4. If it does not appear, run **MCP: List Servers** or **Chat: Open Customizations > MCP Servers** to inspect and start it.
 
-## OpenCode
+The workspace MCP configuration is in `.vscode/mcp.json`. See the [VS Code MCP guide](https://code.visualstudio.com/docs/agent-customization/mcp-servers).
 
-From the project directory, add the hosted server:
+### OpenCode
 
-```sh
-opencode mcp add supabase --url "https://mcp.supabase.com/mcp?project_ref=YOUR_PROJECT_REF&read_only=true&features=database,docs"
-```
+1. Replace `YOUR_PROJECT_REF` in `opencode.json` with your Supabase project reference, then start OpenCode with this repository as the project.
+2. In a terminal, run:
 
-To make the server available in every project, add `--global`:
+   ```sh
+   opencode mcp auth supabase
+   opencode mcp list
+   ```
 
-```sh
-opencode mcp add supabase --global --url "https://mcp.supabase.com/mcp?project_ref=YOUR_PROJECT_REF&read_only=true&features=database,docs"
-```
+3. Complete the browser sign-in. `opencode mcp list` should show `supabase` as connected.
 
-Authenticate and check the connection:
-
-```sh
-opencode mcp auth supabase
-opencode mcp list
-```
-
-Complete the sign-in flow in your browser. Alternatively, configure a remote server in `opencode.json` under `mcp.servers`; see the [OpenCode MCP guide](https://opencode.ai/docs/mcp-servers/).
-
-## Claude
+The MCP configuration is in `opencode.json`. OpenCode loads the root `AGENTS.md` as project instructions. See the [OpenCode MCP guide](https://opencode.ai/docs/mcp-servers/) and [instructions guide](https://opencode.ai/docs/instructions/).
 
 ### Claude Code
 
-Run this in a terminal from your project directory, replacing `YOUR_PROJECT_REF`:
+1. Replace `YOUR_PROJECT_REF` in `.mcp.json` with your Supabase project reference, then start Claude Code from this repository.
+2. Approve the project MCP server if Claude Code asks for approval.
+3. In the Claude Code session, run `/mcp`, select `supabase`, and choose **Authenticate**. Complete the browser sign-in.
+4. In a terminal, run `claude mcp list`; the server should show as connected.
 
-```sh
-claude mcp add --scope project --transport http supabase "https://mcp.supabase.com/mcp?project_ref=YOUR_PROJECT_REF&read_only=true&features=database,docs"
-```
+The MCP configuration is in `.mcp.json`. Claude Code can use the root `AGENTS.md` as project instructions. See the [Claude Code MCP guide](https://code.claude.com/docs/en/mcp).
 
-Start Claude Code, approve the project-scoped server if prompted, then enter `/mcp` and choose **Authenticate** for `supabase`. You can check the server status from a terminal with:
+### Claude Desktop and Claude.ai
 
-```sh
-claude mcp list
-```
+These clients do not use this repository's `.mcp.json` or automatically load its `AGENTS.md`. To connect Supabase, add a custom connector from the [Claude Connectors directory](https://claude.ai/customize/connectors), using the URL above, keep the detected OAuth settings, and complete sign-in. To apply the sales-reporting rules in these clients, add the relevant instructions to the conversation or configure instructions using that client’s supported feature.
 
-See the [Claude Code MCP guide](https://code.claude.com/docs/en/mcp).
+## Verify the setup
 
-### Claude Desktop or Claude.ai
+In each client, make a low-impact request such as:
 
-1. Open the [Claude Connectors directory](https://claude.ai/customize/connectors).
-2. Choose **Add** > **Add custom connector**.
-3. Name the connector (for example, `Supabase`) and enter the same project-scoped URL used above.
-4. Keep the detected OAuth authentication settings, add the connector, and complete the sign-in prompt.
-5. Enable the connector for a conversation and ask Claude to list the project's tables.
+> Use the Supabase MCP tools to inspect the available sales-related tables and columns. Do not modify data. Report which tables and fields would be needed to calculate completed-sales revenue.
 
-On Team or Enterprise plans, an organization owner may need to add the custom connector first. See Anthropic's guide to [adding a custom connector by URL](https://claude.com/docs/connectors/custom/add-unlisted).
+Confirm that the client actually invoked a Supabase MCP tool and that its response came from the intended project. A plausible answer without an MCP tool call does not confirm the connection.
+
+For a sales report, ask the assistant to state the reporting period, show the query or supporting calculation, use completed sales only for revenue, and identify any missing fields or incomplete data. Revenue is not profit or cash flow.
 
 ## Troubleshooting
 
-- **Authentication is pending:** Use the client's MCP or connector controls to finish the browser sign-in.
-- **The server is not listed:** Check that the configuration file is in the correct workspace or user scope, then reload or restart the client.
-- **No tools appear:** Confirm the project reference is correct and that the connection is authorized for the expected Supabase account.
-- **A tool is unavailable:** The `features` and `read_only` URL parameters intentionally limit which tools are exposed.
+- **Authentication is required:** Complete the browser sign-in in that specific client.
+- **Claude Code says approval is pending:** Start Claude Code from this repository and approve the project-scoped server when prompted.
+- **The server does not appear:** Confirm this repository is the open workspace/project, then reload or restart the client and inspect its MCP server list.
+- **No MCP tool call occurs:** Confirm the server is connected and the selected Copilot mode supports MCP tools. Ask explicitly to use the `supabase` server.
+- **Tables or tools are unavailable:** Confirm you replaced `YOUR_PROJECT_REF` with the correct project reference and that your signed-in Supabase account can access that project. The configured `database,docs` feature selection is intentional.
+- **Instructions are not applied:** Confirm the client opened this repository as the workspace and that `AGENTS.md` is present. Claude Desktop and Claude.ai do not automatically read it.
 
-## Security notes
+## Security
 
-- Use a development project while learning, and scope the connection to that project.
-- Keep `read_only=true` unless you specifically need write-capable tools. Read-only mode is a useful safeguard, not a substitute for reviewing tool calls.
-- Review each tool call before approving it, especially before enabling write access. MCP tools can read or change data depending on the server configuration.
-- Do not commit credentials, access tokens, or secrets. The examples above contain only a project reference; authentication happens through the client.
-- Disconnect or remove the MCP server when you no longer need it.
+- The MCP URL contains a project reference, not a password or API key. Do not add credentials or tokens to these files.
+- Keep the connection read-only for reporting. Do not remove `read_only=true` unless write access is explicitly required and understood.
+- Review tool calls; model instructions guide behavior but do not enforce it. The read-only server setting is the database access restriction.
+- Commit the configuration and `AGENTS.md` files if you want teammates or a fresh clone to receive the same setup. Authenticate separately on each computer.
 
-For Supabase's full setup and security guidance, see the [Supabase MCP documentation](https://supabase.com/docs/guides/ai-tools/mcp).
+For Supabase's full MCP setup and security guidance, see the [Supabase MCP documentation](https://supabase.com/docs/guides/ai-tools/mcp).
